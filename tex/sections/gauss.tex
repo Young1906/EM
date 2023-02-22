@@ -1,0 +1,275 @@
+Given the latent variable $z$, random variable $x$ follows Gaussian distribution
+
+\begin{equation}
+	x_i | z_i = k; \theta \sim \mathcal{N}(\mu_k, \Sigma_k); 
+		\quad \theta = (\pi_{1:M}, \mu_{1:M}, \Sigma_{1:M});
+		\quad x_i \in \mathbb{R}^P
+\end{equation}
+
+The probability density function (p.d.f) for $x$:
+
+\begin{equation}
+	\begin{aligned}
+		f(x_i | z_i = k, \theta) & = \mathcal{N}(x_i | \mu_k, \Sigma_k) \\
+		& = \prod_{k=1}^M {
+				\bigg [ 
+					\mathcal{N}(x_i | \mu_k, \Sigma_k)
+				\bigg ]^{\mathbb{I}(z_i = k)}
+			}
+	\end{aligned}
+\end{equation}
+
+In which 
+\begin{equation*}
+    \mathbb{I}(z_i = k) = \begin{cases}
+        1, & \text{If } z_i = k, \\
+        0, & \text{If } z_i \neq k
+    \end{cases}
+\end{equation*}
+
+Probability mass function (p.m.f) for $z$:
+
+\begin{equation}
+	p(z_i = k|\theta) = \pi_k = \prod_{k = 1}^M {
+		\pi_k
+	}^{\mathbb{I}(z_i = k)}
+\end{equation}
+
+Joint probability of $x, z$
+
+\begin{equation}
+    \begin{aligned}
+       p(x_i, z_i | \theta) & = p(x_i | z_i, \theta) p(z_i | \theta) \\
+       & = \prod_{k=1}^M {
+			\bigg [
+				\pi_k
+				\mathcal{N}(x_i | \mu_k, \Sigma_k)
+			\bigg ]
+		}^{\mathbb{I}(z_i = k)}
+    \end{aligned}
+\end{equation}
+
+
+
+
+\begin{equation}
+    \begin{aligned}
+        P(X,Z | \theta) & = \prod_{i=1}^N {p(x_i, z_i|\theta)} \\
+            & = \prod_{i=1}^N{
+                    \prod_{k=1}^M{
+						\bigg [
+							\pi_k
+							\mathcal{N}(x_i|\mu_k, \Sigma_k)
+						\bigg ]^{I(z_i = k)}
+                    }
+            }
+    \end{aligned}
+\end{equation}
+
+We need to maximize the quantity above, using \textbf{EM}-algorithm as follow 
+
+\begin{itemize}
+	\item The \textbf{E}-step
+		\begin{itemize}
+			\item Consider the expectation of the complete log-likelihood
+				\begin{equation}
+				    \begin{aligned}
+				        Q(\theta | \theta^t) & = \mathbb{E}_{Z|X, \theta^t}\left [ 
+				            \log P(X, Z | \theta)    
+				        \right ] \\
+				            & = \mathbb{E}_{Z | X, \theta^t} \bigg [ 
+				                \log \prod_{i=1}^N {
+				                    \prod_{k=1}^M {
+										[\pi_k \mathcal{N}(x_i | \mu_k, \Sigma_k)]^{\mathbb{I}(z_i = k)}
+				                    }
+				                }    
+				            \bigg ] \\
+				            & = \mathbb{E}_{Z | X, \theta^t} \bigg [ 
+								\sum_{i=1}^N {
+									\sum_{k = 1}^M {
+										\mathbb{I}(z_i = k) [
+											\log \pi_k +
+											\log \mathcal{N}(x_i | \mu_k, \Sigma_k)
+										]
+									}
+								}
+							\bigg ] \\
+							& = \sum_{i = 1}^N {
+								\sum_{k = 1}^M {
+									\mathbb{E}_{z_i | x_i, \theta^t} [
+										\mathbb{I}(z_i = k)
+									][
+											\log \pi_k +
+											\log \mathcal{N}(x_i | \mu_k, \Sigma_k)
+									]
+								}
+							}
+					\end{aligned}
+				\end{equation}
+			\item Because $\log \pi_k + \log \mathcal{N}(x_i | \mu_k, \Sigma_k)$ is constant with respect to $z$, we can take them out of the expectation. Consider the expectation of the indicator function
+				\begin{equation}
+					\begin{aligned}
+						\mathbb{E}_{z_i | x_i, \theta^t} [
+							\mathbb{I}(z_i = k)
+						] & = \sum_{z_i = 1}^M {
+							p(z_i | x_i, \theta^t) \mathbb{I} (z_i = k)
+						} \\
+						& = p(z_i = k| x_i, \theta^t) \\
+						& = \frac{
+							p(x_i | z_i = k, \theta^t) p(z_i = k |\theta^t)
+						}{
+							\sum_{g=1}^M {
+								p(x_i | z_i = g, \theta^t) p(z_i = g |\theta^t)
+							}
+						} \\
+						& = \frac{
+							\pi_k^t \mathcal{N}(x_i | \mu_k^t, \Sigma_k^t)
+						}{
+							\sum_{g=1}^M {
+								\pi_g^t \mathcal{N}(x_i | \mu_g^t, \Sigma_g^t)
+							}
+						} =: A_{ik}
+					\end{aligned}
+				\end{equation}
+			\item Subsititute eq.8 to eq.7 we have 
+				\begin{equation}
+					\begin{aligned}
+						Q(\theta | \theta^t) & = \sum_{i = 1}^N {
+							\sum_{k=1}^M {
+								A_{ik} [\log \pi_k + \log \mathcal{N}(x_i | \mu_k, \Sigma_k) ]
+							}
+						}
+					\end{aligned}
+				\end{equation}
+		\end{itemize}
+
+
+
+
+	\item The \textbf{M}-step : We need to maximize $Q(\theta, \theta^t)$ that subject to constraint $\sum_{k=1}^M \pi_k - 1 = 0$
+
+Let
+
+\begin{equation}
+	K(\theta) = Q(\theta | \theta^t) - \lambda (\sum_{i = 1}^M \pi_k - 1) 
+\end{equation}
+
+		\begin{itemize}
+			\item Solve for $\pi_k$
+				\begin{equation}
+					\begin{aligned}
+						\frac{\partial K}{\partial \pi_k} & = 0 \\
+						\iff & \frac{\partial}{\partial \pi_k}\bigg\{\sum_{i=1}^N{
+							\sum_{k=1}^M {
+								A_{ik} [ 
+									\log \pi_k
+									+ \log \mathcal{N}(x_i | \mu_k, \Sigma_k)
+								]
+							}
+						} +  \lambda(\sum_{k = 1}^M - 1)  
+						\bigg \} = 0 \\
+						\iff & \sum_{i=1}^N {
+							A_{ik} \frac{1}{\pi_k}
+						} -\lambda = 0 \\
+						\iff & \pi_k= \frac{\sum_{i=1}^N{A_{ik}}}{\lambda}
+					\end{aligned}
+				\end{equation}
+
+				Substitute $\pi_k$ into the constrain
+					\begin{equation}
+						\begin{aligned}
+							& \sum_{k=1}^M {\pi_k} = 1 \\
+							\iff & \sum_{k=1}^M{
+								\frac{\sum_{i=1}^N{A_{ik}}}{\lambda}
+							} = 1 \\
+							\iff & \lambda = \sum_{k=1}^M \sum_{i=1}^N A_{ik} \\
+								& = N 
+						\end{aligned}
+					\end{equation}
+				So that we have 
+				\begin{equation}
+					\pi_k = \frac{\sum_{i=1}^N{A_{ik}}}{N}
+				\end{equation}
+			\item Solve for $\mu_k$, recall the p.d.f of Multivariate Gaussian Distribution
+				$$
+				\mathcal{N}(x_i | \mu_k, \Sigma_k) = (2\pi)^\frac{-P}{2} 
+					\det{\Sigma_k}^{-\frac{1}{2}} 
+					\exp \bigg [
+						-\frac{1}{2}(x_i -\mu_k)^\top\Sigma_k^{-1} (x_i - \mu_k)
+					\bigg ]
+				$$ 
+				
+				\begin{equation}
+					\begin{aligned}
+						& \frac{\partial K}{\partial \mu_k} = 0 \\
+						\iff &  
+						\frac{\partial}{\partial \mu_k} {
+							\sum_{i=1}^N {
+								\sum_{k=1}^M {
+									A_{ik} [
+										-\frac{P}{2}\log{2\pi} -\frac{1}{2} \log \det \Sigma_k - \frac{1}{2} (x_i - \mu_k)^\top\Sigma_k^{-1}(x_i - \mu_k)
+									]
+								}
+							}
+						} = 0 \\
+						\iff & 
+							\sum_{i=1}^N{
+								-A_{ik} \Sigma_k^{-1} (x_i - \mu_k)
+							} = 0 \\
+						\iff &
+							\mu_k = \frac{
+								\sum_{i=1}^{N}{
+									A_{ik} x_i
+								}
+							}{
+								\sum_{i=1}^{N}{
+									A_{ik}				}
+							}
+					\end{aligned}
+				\end{equation}
+			
+				
+			\item Solve for $\Sigma_k$
+				\begin{equation}
+					\begin{aligned}
+						\frac{\partial K}{\partial \Sigma_k} & = 0 \\
+						\iff &
+							\frac{\partial}{\partial \Sigma_k} {
+								\sum_{i=1}^N {
+									\sum_{k=1}^M {
+										A_{ik} [
+											-\frac{P}{2}\log{2\pi} -\frac{1}{2} \log \det \Sigma_k - \frac{1}{2} (x_i - \mu_k)^\top\Sigma_k^{-1}(x_i - \mu_k)
+										]
+									}
+								}
+							} = 0 \\
+						\iff & 
+							\sum_{i = 1}^N {
+								A_{ik} [
+									-\frac{1}{2} (\Sigma_k^{-1})^\top 
+									+\frac{1}{2} (x_i - \mu_k)(x_i - \mu_k)^\top \Sigma_k^{-1} \mathbf{I} \Sigma_k^{-1}
+								]
+							} = 0 \\
+						\iff & 
+							\sum_{i = 1}^N {
+								A_{ik} [
+									(x_i - \mu_k)(x_i - \mu_k)^\top \Sigma_k^{-1}
+								]
+							} = \sum_{i=1}^N A_{ik} \\
+						\iff & 
+							\Sigma_k = \frac{
+								\sum_{i = 1}^N {
+									A_{ik} [
+										(x_i - \mu_k)(x_i - \mu_k)^\top 
+									]
+								} 
+							}
+							{
+								\sum_{i = 1}^N {A_{ik}}
+							}
+					\end{aligned}
+				\end{equation}
+		\end{itemize}
+\end{itemize}
+
+Eq. 13, 14, 15 give us the update rule for $\theta$

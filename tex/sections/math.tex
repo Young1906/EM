@@ -1,0 +1,12 @@
+Assume observed data $\mathbf{X}$ arised from some random process involved latent variable $\mathbf{Z}$, and parameter $\mathbf{\theta}$ that we like to estimate. We will find parameters $\mathbf{\theta}$ such that the likelihood of observed data is maximized. The likelihood function of data $\mathbf{X}$ is a function of $\mathbf{\theta}$
+\begin{equation}
+	L(\mathbf{\theta}) = P(\mathbf{X}|\mathbf{\theta}) 
+		= \int{P(\mathbf{X,Z}|\theta)d\mathbf{Z}} 
+		= \int{P(\mathbf{X} | \mathbf{Z}, \theta) P(\mathbf{Z} | \theta) d\mathbf{Z}} 
+\end{equation}
+
+However this integral is intractable since $\mathbf{Z}$ is unobserved, and pdf of $Z$ is unknow without $\theta$. The EM algorithm maximize $L(\theta)$ by iteratively applying two steps
+
+\begin{itemize}
+	\item The Expectation Step (E)
+\end{itemize}

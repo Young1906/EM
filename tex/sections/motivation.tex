@@ -1,0 +1,12 @@
+\emph{Expectation Maximization (EM)} is typically used to solve a class of problem where we have a set of observed data $X$ arised from an latent variable $Z$ and some paramenters $\theta$ that we like to estimate. A typical example of this class of problem is \emph{Mixture Model} where we the observed data come from a linear combination of a underlying distribution. In case $z$ is discreet:
+
+\begin{equation}
+	p(x|\theta) = \sum_{z}{p(z | \theta) p(x|z,\theta)} =   \sum_{z}{p(x,z | \theta)}
+\end{equation}
+
+Or in case $z$ is continuous 
+
+\begin{equation}
+	p(x) = \int_{z}{p(z|\theta)p(x|z,\theta)dz}
+\end{equation}
+
